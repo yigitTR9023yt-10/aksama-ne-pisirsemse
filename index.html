@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>Akşama Ne Pişirsem?</title>
+<style>
+body {
+  margin: 0;
+  height: 100vh;
+  background: #0f0f0f;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: Arial, Helvetica, sans-serif;
+}
+.container { text-align: center; }
+h1 { font-size: 34px; margin-bottom: 20px; }
+.main-btn {
+  background: linear-gradient(135deg, #ff7a18, #ffb347);
+  border: none;
+  padding: 15px 30px;
+  font-size: 18px;
+  border-radius: 30px;
+  cursor: pointer;
+}
+.main-btn:hover { transform: scale(1.08); box-shadow: 0 0 15px rgba(255,183,71,0.7); }
+.shake { animation: shake 0.2s; }
+@keyframes shake {
+  0% {transform:translateX(0)}
+  25% {transform:translateX(-3px)}
+  50% {transform:translateX(3px)}
+  75% {transform:translateX(-3px)}
+  100% {transform:translateX(0)}
+}
+.sonuc { margin-top: 18px; font-size: 22px; font-weight: bold; opacity: 0; transition: opacity 0.5s; }
+.sonuc.show { opacity: 1; }
+.aciklama { font-size: 14px; opacity: 0.8; }
+/* MODLAR */
+.modlar { position: absolute; top: 15px; left: 15px; }
+.mod-btn {
+  font-size: 15px;
+  padding: 10px 18px;
+  border-radius: 22px;
+  border: none;
+  background: #222;
+  color: white;
+  cursor: pointer;
+}
+.aktif-mod { margin-top: 6px; font-size: 12px; opacity: 0.8; }
+.mod-menu { display: none; background: #1a1a1a; border-radius: 10px; margin-top: 5px; }
+.mod-menu button { width: 100%; padding: 8px; background: none; border: none; color: white; cursor: pointer; }
+.mod-menu button:hover { background: #333; }
+/* ÖZEL */
+.ozel-alan { position: absolute; top: 20px; right: 20px; text-align: center; }
+.sayac { font-size: 12px; opacity: 0.8; }
+.hak { font-size: 13px; margin-bottom: 6px; }
+.ozel-btn {
+  background: linear-gradient(45deg, red, orange, yellow, green, cyan, blue, purple, red);
+  background-size: 400% 400%;
+  animation: rgbFlow 5s linear infinite;
+  border: none; padding: 12px 18px; border-radius: 25px; cursor: pointer; font-weight: bold; color: black;
+}
+.ozel-btn:hover { animation-duration: 1.5s; transform: scale(1.1); }
+@keyframes rgbFlow { 0% {background-position:0% 50%} 100% {background-position:100% 50%} }
+/* MODAL */
+.modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; }
+.modal { background: #1c1c1c; padding: 25px; border-radius: 20px; text-align: center; }
+.modal button { margin: 8px; padding: 12px 20px; border-radius: 25px; border: none; cursor: pointer; font-size: 15px; }
+.modal button:hover { transform: scale(1.1); }
+</style>
+</head>
+<body>
+<div class="modlar">
+  <button class="mod-btn" onclick="toggleMod()">Modlar ⬇</button>
+  <div class="aktif-mod" id="aktifModYazi">Seçili mod: Klasik</div>
+  <div class="mod-menu" id="modMenu">
+    <button onclick="setMod('klasik')">Klasik</button>
+    <button onclick="setMod('sporcu')">Sporcu</button>
+  </div>
+</div>
+<div class="container">
+  <h1>Akşama Ne Pişirsem?</h1>
+  <button class="main-btn" onclick="normalYemek(this)">Bana yemek söyle</button>
+  <div class="sonuc" id="normalSonuc"></div>
+  <div class="aciklama" id="normalAciklama"></div>
+</div>
+<div class="ozel-alan">
+  <div class="sayac" id="sayac"></div>
+  <div class="hak" id="hakYazi"></div>
+  <button class="ozel-btn" onclick="modalAc()">Sana Özel Yemek</button>
+  <div class="sonuc" id="ozelSonuc"></div>
+  <div class="aciklama" id="ozelAciklama"></div>
+</div>
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h3>Hangi mod?</h3>
+    <button onclick="ozelSec('klasik')">Klasik</button>
+    <button onclick="ozelSec('sporcu')">Sporcu</button>
+    <button onclick="ozelSec('karisik')">Karışık</button>
+  </div>
+</div>
+<script>
+let aktifMod="klasik";
+let hak=5;
+let reset=Date.now()+86400000;
+let normalIndex={klasik:0,sporcu:0};
+let ozelKlasik=[],ozelSporcu=[];
+
+/* Klasik Yemek Listesi (100 adet) */
+let klasik=[
+{ad:"Izgara tavuk + roka",aciklama:"Lezzetli kremalı"},
+{ad:"Fırında somon + limon",aciklama:"Taze, hafif"},
+{ad:"Kuru fasulye + pilav",aciklama:"Ev klasiği"},
+{ad:"Mercimek çorbası + ekmek",aciklama:"Sıcak kremalı"},
+{ad:"Makarna bolonez",aciklama:"Soslu nefis"},
+{ad:"Sebzeli omlet",aciklama:"Hafif, sağlıklı"},
+{ad:"Karnıyarık + pilav",aciklama:"Ev yapımı"},
+{ad:"Zeytinyağlı fasulye",aciklama:"Taze lezzet"},
+{ad:"Köfte + patates püresi",aciklama:"Doyurucu kremalı"},
+{ad:"Ispanaklı börek",aciklama:"Kremalı ve nefis"},
+{ad:"Tavuk sote + bulgur",aciklama:"Lezzetli, hafif"},
+{ad:"Balık köftesi + salata",aciklama:"Taze ve sağlıklı"},
+{ad:"Nohut yemeği + bulgur",aciklama:"Ev klasiği"},
+{ad:"Fırında mücver + yoğurt",aciklama:"Kremalı nefis"},
+{ad:"Etli nohut",aciklama:"Lezzetli ve doyurucu"},
+{ad:"Patlıcan musakka + salata",aciklama:"Ev yapımı"},
+{ad:"Mantarlı kremalı makarna",aciklama:"Kremalı lezzet"},
+{ad:"Sebzeli güveç",aciklama:"Taze ve hafif"},
+{ad:"Lahmacun",aciklama:"Sıcak ve nefis"},
+{ad:"Ev yapımı pizza",aciklama:"Kremalı ve doyurucu"},
+{ad:"Biber dolması",aciklama:"Kremalı nefis"},
+{ad:"Sulu köfte",aciklama:"Ev yapımı"},
+{ad:"Patatesli omlet",aciklama:"Hafif doyurucu"},
+{ad:"Sebzeli noodle",aciklama:"Lezzetli kremalı"},
+{ad:"Fırında levrek + sebzeler",aciklama:"Taze ve hafif"},
+{ad:"Tavuklu wraps",aciklama:"Pratik lezzet"},
+{ad:"Kabak sote + bulgur",aciklama:"Kremalı hafif"},
+{ad:"Taze fasulye + yoğurt",aciklama:"Ev klasiği"},
+{ad:"Mantı",aciklama:"Yoğurtlu nefis"},
+{ad:"Kıymalı patates",aciklama:"Sıcak doyurucu"},
+{ad:"Peynirli fırın makarna",aciklama:"Kremalı lezzet"},
+{ad:"Tavuklu cevizli salata",aciklama:"Hafif ve taze"},
+{ad:"Peynirli pide",aciklama:"Mini pizzalar"},
+{ad:"Kremalı mantar çorbası + ekmek",aciklama:"Sıcak nefis"},
+{ad:"Vegan karnıyarık",aciklama:"Lezzetli hafif"},
+{ad:"Sucuklu yumurta + ekmek",aciklama:"Sıcak pratik"},
+{ad:"Izgara köfte + cacık",aciklama:"Klasik lezzet"},
+{ad:"Zeytinyağlı enginar",aciklama:"Taze kremalı"},
+{ad:"Tavuklu şehriye çorbası",aciklama:"Sıcak doyurucu"},
+{ad:"Et sote + fırın sebzeler",aciklama:"Kremalı lezzet"},
+{ad:"Közlenmiş biberli makarna",aciklama:"Soslu nefis"},
+{ad:"Peynirli karnabahar fırını",aciklama:"Kremalı taze"},
+{ad:"Ton balıklı salata + limon",aciklama:"Taze hafif"},
+{ad:"Fırın patates + köfte",aciklama:"Sıcak doyurucu"},
+{ad:"Peynirli taze börek",aciklama:"Kremalı nefis"},
+{ad:"Patates kebabı",aciklama:"Ev yapımı"},
+{ad:"Domatesli bulgur + kavurma",aciklama:"Lezzetli doyurucu"},
+{ad:"Tavuklu lazanya",aciklama:"Kremalı nefis"},
+{ad:"Mercimek köftesi + roka",aciklama:"Sağlıklı lezzet"},
+{ad:"Kereviz yemeği + pilav",aciklama:"Hafif kremalı"},
+{ad:"Sebzeli krep",aciklama:"Lezzetli ve hafif"},
+{ad:"Arnavut ciğeri + soğan",aciklama:"Baharatlı nefis"},
+{ad:"Balık ızgara + patates salata",aciklama:"Taze ve hafif"},
+{ad:"Tavuk şiş + közlenmiş soğan",aciklama:"Doyurucu lezzet"},
+{ad:"Kuru fasulye piyaz + pide",aciklama:"Ev klasiği"},
+{ad:"Fırın makarna",aciklama:"Kremalı nefis"},
+{ad:"Tavuklu kinoa salatası",aciklama:"Hafif ve taze"},
+{ad:"Kuru domatesli makarna",aciklama:"Soslu lezzet"},
+{ad:"Sosisli patates tava",aciklama:"Sıcak doyurucu"},
+{ad:"Mantarlı risotto",aciklama:"Kremalı nefis"},
+{ad:"Peynirli dolma",aciklama:"Taze kremalı"},
+{ad:"Tavuklu dürüm",aciklama:"Pratik lezzet"},
+{ad:"Mercimekli köfte",aciklama:"Sağlıklı nefis"},
+{ad:"Hünkar beğendi + kuşbaşı et",aciklama:"Kremalı doyurucu"},
+{ad:"Patates gratin + sebze",aciklama:"Sıcak kremalı"},
+{ad:"Bamya yemeği + yoğurt",aciklama:"Ev klasiği"},
+{ad:"Fırında tavuk kanatları + mısır",aciklama:"Lezzetli nefis"},
+{ad:"Sebzeli börek",aciklama:"Kremalı hafif"},
+{ad:"Kiremitte et veya tavuk",aciklama:"Sıcak nefis"},
+{ad:"Yeşil mercimek çorbası + ekmek",aciklama:"Sıcak kremalı"},
+{ad:"Peynirli gözleme + ayran",aciklama:"Ev yapımı"},
+{ad:"Mantarlı tavuk güveç",aciklama:"Kremalı lezzet"},
+{ad:"Izgara sebzeli kuskus",aciklama:"Hafif taze"},
+{ad:"Klasik tavuklu pilav",aciklama:"Ev klasiği"},
+{ad:"Baklagil salatası",aciklama:"Taze ve hafif"},
+{ad:"Şehriyeli sütlü tavuk",aciklama:"Kremalı nefis"},
+{ad:"Ton balıklı soğuk makarna",aciklama:"Hafif doyurucu"},
+{ad:"Etli sebze güveç",aciklama:"Kremalı lezzet"},
+{ad:"Tereyağlı mantar + et sote",aciklama:"Kremalı nefis"},
+{ad:"Fırında karnabahar steak",aciklama:"Sıcak taze"},
+{ad:"Peynirli patates köftesi + salata",aciklama:"Doyurucu kremalı"},
+{ad:"Tavuklu bezelye yemeği",aciklama:"Hafif lezzet"},
+{ad:"Çılbır + ekmek",aciklama:"Sıcak nefis"},
+{ad:"Kıymalı kabak dolması",aciklama:"Kremalı doyurucu"},
+{ad:"Semizotu yoğurt + balık",aciklama:"Taze hafif"},
+{ad:"Balık buğulama + limon",aciklama:"Hafif nefis"},
+{ad:"Etli yaprak sarma + yoğurt",aciklama:"Kremalı lezzet"},
+{ad:"Fırında palamut + sebze",aciklama:"Taze doyurucu"},
+{ad:"Tavuklu makarna salatası",aciklama:"Soğuk kremalı"},
+{ad:"Baharatlı fırın patates + köfte",aciklama:"Sıcak nefis"},
+{ad:"Sebzeli çorba + ekmek",aciklama:"Hafif kremalı"},
+{ad:"Ev yapımı mantı + yoğurt",aciklama:"Sıcak nefis"},
+{ad:"Fırında karnabahar + sos",aciklama:"Kremalı taze"},
+{ad:"Pırasa yemeği + yoğurt",aciklama:"Hafif doyurucu"},
+{ad:"Kıymalı pide + salata",aciklama:"Sıcak kremalı"},
+{ad:"Sütlaç veya kazandibi",aciklama:"Tatlı kremalı"}
+];
+
+/* Sporcu Yemek Listesi (100 adet) - parça 1 */
+let sporcu=[
+{ad:"Izgara tavuk göğsü + kinoa",aciklama:"Protein dengeli"},
+{ad:"Fırında somon + brokoli",aciklama:"Omega 3"},
+{ad:"Yağsız dana bonfile + bulgur",aciklama:"Kas dostu"},
+{ad:"Hindi köfte + tam makarna",aciklama:"Yağsız güç"},
+{ad:"Tavuk sote + esmer pirinç",aciklama:"Proteinli hafif"},
+{ad:"Izgara köfte + salata",aciklama:"Doyurucu sağlıklı"},
+{ad:"Ton balıklı salata + yumurta",aciklama:"Enerji dolu"},
+{ad:"Fırında levrek + roka",aciklama:"Taze ve hafif"},
+{ad:"Tavuklu mercimek yemeği",aciklama:"Proteinli kremalı"},
+{ad:"Etli nohut + yoğurt",aciklama:"Doyurucu, hafif"},
+{ad:"Fırında somon + brokoli + limon",aciklama:"Omega 3 zengin"},
+{ad:"Yağsız dana bonfile + bulgur",aciklama:"Kas dostu"},
+{ad:"Hindi köfte + tam buğday makarna",aciklama:"Protein ağırlıklı"},
+{ad:"Tavuk sote + esmer pirinç",aciklama:"Doyurucu ve hafif"},
+{ad:"Izgara köfte + yeşil salata",aciklama:"Az yağlı"},
+{ad:"Ton balıklı salata + yumurta",aciklama:"Hafif protein"},
+{ad:"Fırında levrek + roka salata",aciklama:"Taze ve hafif"},
+{ad:"Tavuklu mercimek yemeği",aciklama:"Protein dolu"},
+{ad:"Etli nohut + yoğurt",aciklama:"Doyurucu klasik"},
+{ad:"Izgara hindi göğsü + tatlı patates",aciklama:"Kas destekli"},
+{ad:"Kıymalı kabak yemeği",aciklama:"Yağsız lezzet"},
+{ad:"Tavuklu sebze güveç",aciklama:"Protein dengeli"},
+{ad:"Fırında somon + ıspanak",aciklama:"Omega 3"},
+{ad:"Tavuklu kinoa salatası",aciklama:"Hafif ve enerji"},
+{ad:"Fırında levrek + karnabahar",aciklama:"Düşük yağlı"},
+{ad:"Yağsız dana kavurma + brokoli",aciklama:"Kas dostu"},
+{ad:"Tavuk sote + buğday pilavı",aciklama:"Proteinli"},
+{ad:"Izgara köfte + sebze sote",aciklama:"Doyurucu ve hafif"},
+{ad:"Ton balıklı wrap",aciklama:"Pratik ve proteinli"},
+{ad:"Fırında somon + yeşil fasulye",aciklama:"Taze ve hafif"},
+{ad:"Hindi köfte + kabak spagetti",aciklama:"Kas dostu"},
+{ad:"Tavuklu sebzeli noodle",aciklama:"Hafif ve proteinli"},
+{ad:"Izgara tavuk + kinoa salatası",aciklama:"Doyurucu ve hafif"},
+{ad:"Fırında levrek + kabak",aciklama:"Taze ve sağlıklı"},
+{ad:"Tavuklu mercimek çorbası",aciklama:"Proteinli nefis"},
+{ad:"Etli nohut + bulgur",aciklama:"Doyurucu hafif"},
+{ad:"Fırında somon + brokoli + limon",aciklama:"Omega 3 zengin"},
+{ad:"Yağsız dana bonfile + ızgara sebze",aciklama:"Kas dostu"},
+{ad:"Hindi köfte + esmer pirinç",aciklama:"Protein ağırlıklı"},
+{ad:"Tavuk sote + kinoa",aciklama:"Doyurucu ve hafif"},
+{ad:"Izgara köfte + yeşil salata",aciklama:"Az yağlı"},
+{ad:"Ton balıklı salata + tam yumurta",aciklama:"Hafif protein"},
+{ad:"Fırında levrek + roka + limon",aciklama:"Taze nefis"},
+{ad:"Tavuklu mercimek yemeği",aciklama:"Proteinli doyurucu"},
+{ad:"Etli nohut + yoğurt",aciklama:"Hafif ve proteinli"},
+{ad:"Izgara hindi + tatlı patates",aciklama:"Kas destekli"},
+{ad:"Kıymalı kabak yemeği",aciklama:"Düşük yağlı"},
+{ad:"Tavuklu sebze güveç",aciklama:"Protein dengeli"},
+{ad:"Fırında somon + ıspanak",aciklama:"Omega 3"},
+{ad:"Tavuklu kinoa salatası",aciklama:"Hafif enerji"},
+{ad:"Fırında levrek + karnabahar",aciklama:"Düşük yağlı"},
+{ad:"Yağsız dana kavurma + brokoli",aciklama:"Kas dostu"},
+{ad:"Tavuk sote + buğday pilavı",aciklama:"Proteinli"},
+{ad:"Izgara köfte + sebze sote",aciklama:"Doyurucu hafif"},
+{ad:"Ton balıklı wrap",aciklama:"Pratik ve proteinli"},
+{ad:"Fırında somon + yeşil fasulye",aciklama:"Taze hafif"},
+{ad:"Hindi köfte + kabak spagetti",aciklama:"Kas dostu"},
+{ad:"Tavuklu sebzeli noodle",aciklama:"Hafif proteinli"},
+{ad:"Izgara tavuk + kinoa salatası",aciklama:"Doyurucu ve hafif"},
+{ad:"Fırında levrek + kabak",aciklama:"Taze ve sağlıklı"},
+{ad:"Tavuklu mercimek çorbası",aciklama:"Proteinli nefis"},
+{ad:"Etli nohut + bulgur",aciklama:"Doyurucu hafif"},
+{ad:"Fırında somon + brokoli + limon",aciklama:"Omega 3 zengin"},
+{ad:"Yağsız dana bonfile + ızgara sebze",aciklama:"Kas dostu"},
+{ad:"Hindi köfte + esmer pirinç",aciklama:"Protein ağırlıklı"},
+{ad:"Tavuk sote + kinoa",aciklama:"Doyurucu ve hafif"},
+{ad:"Izgara köfte + yeşil salata",aciklama:"Az yağlı"},
+{ad:"Ton balıklı salata + tam yumurta",aciklama:"Hafif protein"},
+{ad:"Fırında levrek + roka + limon",aciklama:"Taze nefis"}
+];
+/* Devam JS kodu */
+
+function toggleMod() {
+  let menu=document.getElementById("modMenu");
+  menu.style.display = menu.style.display=="block"?"none":"block";
+}
+
+function setMod(mod) {
+  aktifMod = mod;
+  document.getElementById("aktifModYazi").innerText = "Seçili mod: " + (mod.charAt(0).toUpperCase()+mod.slice(1));
+  document.getElementById("modMenu").style.display="none";
+}
+
+function normalYemek(btn) {
+  btn.classList.add("shake");
+  setTimeout(()=>{btn.classList.remove("shake")},200);
+  
+  let list = aktifMod=="klasik"?klasik:sporcu;
+  let index = normalIndex[aktifMod];
+  if(index >= list.length) index=0;
+  normalIndex[aktifMod] = index + 1;
+  let yemek = list[index];
+  
+  let sonucDiv = document.getElementById("normalSonuc");
+  let aciklamaDiv = document.getElementById("normalAciklama");
+  sonucDiv.innerText = yemek.ad;
+  aciklamaDiv.innerText = yemek.aciklama;
+  sonucDiv.classList.add("show");
+  aciklamaDiv.classList.add("show");
+}
+
+function modalAc() {
+  document.getElementById("modalBg").style.display="flex";
+}
+
+function ozelSec(mod) {
+  document.getElementById("modalBg").style.display="none";
+  let list;
+  if(mod=="klasik") list = klasik;
+  else if(mod=="sporcu") list = sporcu;
+  else list = klasik.concat(sporcu);
+
+  if(hak<=0) {
+    document.getElementById("ozelSonuc").innerText="Hak kalmadı, yarın tekrar dene.";
+    document.getElementById("ozelAciklama").innerText="";
+    return;
+  }
+  
+  hak--;
+  document.getElementById("hakYazi").innerText="Kalan hak: "+hak;
+  
+  let rand=Math.floor(Math.random()*list.length);
+  let yemek=list[rand];
+  document.getElementById("ozelSonuc").innerText=yemek.ad;
+  document.getElementById("ozelAciklama").innerText=yemek.aciklama;
+  document.getElementById("ozelSonuc").classList.add("show");
+  document.getElementById("ozelAciklama").classList.add("show");
+}
+
+function sayacGuncelle() {
+  let now = Date.now();
+  if(now >= reset) {
+    hak=5;
+    reset=now+86400000;
+  }
+  let kalan = reset - now;
+  let saat = Math.floor(kalan/3600000);
+  let dakika = Math.floor((kalan%3600000)/60000);
+  let saniye = Math.floor((kalan%60000)/1000);
+  document.getElementById("sayac").innerText = "Yeni haklar: "+saat+"s "+dakika+"dk "+saniye+"sn sonra";
+}
+
+setInterval(sayacGuncelle,1000);
+document.getElementById("hakYazi").innerText="Kalan hak: "+hak;
+
+</script>
+</body>
+</html>
