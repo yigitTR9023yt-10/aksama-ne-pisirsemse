@@ -1,0 +1,13 @@
+{
+  "background_color": "#ffffff",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "Akşama Ne Pişirsem?",
+  "orientation": "any",
+  "scope": "/",
+  "short_name": "Ne Pişirsem?",
+  "start_url": "/https://yigittr9023yt-10.github.io/aksama-ne-pisirsemse/",
+  "theme_color": "#ffffff",
+  "id": "aksama-ne-pisirsem-ki",
+  "description": "Yemek Seçimlerinde Kararsız Olanlar İçin Harika Bir Uygulama! Ayrıca Şimdi Sporcu Modu Da Var!!"
+}
